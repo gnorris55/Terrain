@@ -137,7 +137,9 @@
     <ClCompile Include="RigidBodies.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\RigidBodies\CollisionHandler.h" />
     <ClInclude Include="include\RigidBodies\Cube.h" />
+    <ClInclude Include="include\RigidBodies\Plane.h" />
     <ClInclude Include="include\RigidBodies\RigidMain.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

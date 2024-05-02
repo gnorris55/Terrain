@@ -14,6 +14,8 @@
 #include <learnopengl/Camera.h>
 #include <learnopengl/Raw_Model.h>
 #include <RigidBodies/Cube.h>
+#include <RigidBodies/Plane.h>
+#include <RigidBodies/CollisionHandler.h>
 
 #include <vector>
 #include <iostream>
@@ -85,7 +87,11 @@ int main()
     // build and compile shaders
     // -------------------------
     Shader ourShader("Shaders/default_shader.vs", "Shaders/default_fragment_shader.fs");
-    Cube curr_cube = Cube(&ourShader, glm::vec4(0.0, 0.0, 0.0, 0.0), glm::vec4(0.0, 0.0, 0.0, 0.0), glm::vec3(0.0, 0.0, 0.0));
+    Cube curr_cube = Cube(&ourShader, glm::vec4(0.0, 0.0, 0.0, 0.0), glm::vec4(0.0, 0.0, 0.0, 0.0), glm::vec3(0.0, 0.0, 0.0), 30);
+    Plane curr_plane = Plane(glm::vec4(10, -7, 0, 1), glm::vec4(0, 1, 0, 0), &ourShader);
+    CollisionHandler collision_handler;
+    collision_handler.add_box(&curr_cube);
+    collision_handler.add_plane(&curr_plane);
 
 
     glEnable(GL_BLEND);
@@ -114,7 +120,7 @@ int main()
         ourShader.use();
         ourShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
         ourShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-        ourShader.setVec3("lightPos", 0.0f, 50.0f, 0.0f);
+        ourShader.setVec3("lightPos", -30.0f, 50.0f, 20.0f);
         ourShader.setVec3("viewPos", camera.Position);
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -124,7 +130,11 @@ int main()
 
         // for drawing stuff
         curr_cube.draw_box();
+        curr_cube.update_motion();
 
+        curr_plane.draw_plane();
+
+        collision_handler.handle_collisions();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
