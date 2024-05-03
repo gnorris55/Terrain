@@ -18,6 +18,7 @@ public:
 	float mass;
 
 	glm::vec4 collision_force = glm::vec4(0, 0, 0, 0);
+	glm::vec4 collision_torque = glm::vec4(0, 0, 0, 0);
 	glm::vec4 force;
 	glm::vec4 torque;
 
@@ -25,11 +26,8 @@ public:
 	glm::vec3 scale;
 	glm::vec4 center_of_mass;
 
-
-
-	glm::vec4 linear_velocity = glm::vec4(0,0,0,0);
+	glm::vec4 linear_velocity;
 	glm::vec4 angular_velocity = glm::vec4(0,0,0,0);
-	
 
 	glm::mat4 local_coords_matrix;
 	glm::mat3 rotation_matrix;
@@ -39,12 +37,13 @@ public:
 
 	RawModel* model = NULL;
 
-	MainRigidBody(Shader *shader, glm::vec4 starting_pos, glm::vec4 starting_rotation, glm::vec3 scale, float mass) {
+	MainRigidBody(Shader *shader, glm::vec4 starting_pos, glm::vec4 starting_velocity, glm::vec4 starting_angular, glm::vec3 scale, float mass) {
 		this->program = shader;
 		this->scale = scale;
 		this->position = starting_pos;
 		this->mass = mass;
-		//this->rotation = starting_rotation;
+		this->linear_velocity = starting_velocity;
+		this->angular_velocity = starting_angular;
 
 	}
 
