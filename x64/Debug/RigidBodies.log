@@ -1,5 +1,7 @@
 ﻿  RigidBodies.cpp
 C:\Users\graem\Desktop\Graphics\projects\RigidBodies\include\RigidBodies\RigidMain.h(26,20): warning C4305: 'initializing': truncation from 'double' to 'float'
 C:\Users\graem\Desktop\Graphics\projects\RigidBodies\include\RigidBodies\CollisionHandler.h(137,17): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\graem\Desktop\Graphics\projects\RigidBodies\include\RigidBodies\CollisionHandler.h(183,30): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
+C:\Users\graem\Desktop\Graphics\projects\RigidBodies\include\RigidBodies\CollisionHandler.h(185,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\graem\Desktop\Graphics\projects\RigidBodies\include\RigidBodies\CollisionHandler.h(186,22): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
+LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
   RigidBodies.vcxproj -> C:\Users\graem\Desktop\Graphics\projects\RigidBodies\x64\Debug\RigidBodies.exe

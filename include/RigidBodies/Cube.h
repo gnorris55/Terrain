@@ -102,9 +102,11 @@ public:
 		//std::cout << "curr timestep: " << time_step * h << "\n";
 		
 		// linear movement
+		glm::vec4 new_velocity = prev_state.linear_velocity + (h * force) / mass;
 		current_state.linear_velocity = prev_state.linear_velocity + (h * force) / mass;
 		//std::cout << "linear vel: " << glm::to_string(linear_velocity) << "\n";
-		current_state.center_of_mass = prev_state.center_of_mass + h * current_state.linear_velocity;
+		current_state.center_of_mass = prev_state.center_of_mass + h * prev_state.linear_velocity;
+		current_state.linear_velocity = new_velocity;
 
 		// angular movement
 		glm::mat3 rotation_matrix = glm::mat3_cast(prev_state.rotation_quat);
@@ -146,9 +148,11 @@ public:
 		prev_state.angular_velocity = current_state.angular_velocity;
 		prev_state.rotation_matrix = current_state.rotation_matrix;
 		// linear movement
-		current_state.linear_velocity = current_state.linear_velocity + (h * force) / mass;
+		glm::vec4 new_velocity = current_state.linear_velocity + (h * force) / mass;
 		//std::cout << "linear vel: " << glm::to_string(linear_velocity) << "\n";
-		current_state.center_of_mass = current_state.center_of_mass + h * current_state.linear_velocity;
+		current_state.center_of_mass = current_state.center_of_mass + h * new_velocity;
+		
+		current_state.linear_velocity = new_velocity;
 
 		// angular movement
 		glm::mat3 rotation_matrix = glm::mat3_cast(current_state.rotation_quat);
@@ -171,8 +175,6 @@ public:
 
 
 private:
-
-
 
 	void update_local_coords() {
 		current_state.rotation_matrix = glm::mat3_cast(current_state.rotation_quat);
