@@ -1,3 +1,5 @@
 ﻿  RigidBodies.cpp
-C:\Users\graem\Desktop\Graphics\projects\RigidBodies\include\RigidBodies\RigidMain.h(17,20): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\graem\Desktop\Graphics\projects\RigidBodies\include\RigidBodies\RigidMain.h(26,20): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\graem\Desktop\Graphics\projects\RigidBodies\include\RigidBodies\CollisionHandler.h(137,17): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\graem\Desktop\Graphics\projects\RigidBodies\include\RigidBodies\CollisionHandler.h(183,30): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
   RigidBodies.vcxproj -> C:\Users\graem\Desktop\Graphics\projects\RigidBodies\x64\Debug\RigidBodies.exe

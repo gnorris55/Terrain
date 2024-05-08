@@ -32,7 +32,7 @@ public:
 		glm::mat4 model = glm::mat4(1.0f);
 		//model = glm::translate(model, glm::vec3(0, 0, -15));
 		
-		model = model*local_coords_matrix;
+		model = model*current_state.local_coords_matrix;
 		glUniformMatrix4fv(glGetUniformLocation(program->ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
 		renderer.render(box_mesh, GL_TRIANGLES);
@@ -40,8 +40,8 @@ public:
 
 	void update_motion(/*CollisionHandler* collision_handler*/) {
 
-		get_forces();
-		symplectic_integration();
+		set_forces();
+		integrate(time_step);
 		update_local_coords();
 	}
 
@@ -51,7 +51,7 @@ public:
 		float max_y = -1000000;
 		float max_z = -1000000;
 		for (int i = 0; i < box_mesh.size(); i++) {
-			glm::vec4 world_point = box_mesh[i] * local_coords_matrix;
+			glm::vec4 world_point = box_mesh[i] * current_state.local_coords_matrix;
 			if (world_point.x > max_x) {
 				max_x = world_point.x;
 			}
@@ -70,7 +70,7 @@ public:
 		float min_y = 10000000;
 		float min_z = 10000000;
 		for (int i = 0; i < box_mesh.size(); i++) {
-			glm::vec4 world_point = box_mesh[i] * local_coords_matrix;
+			glm::vec4 world_point = box_mesh[i] * current_state.local_coords_matrix;
 			if (world_point.x < min_x) {
 				min_x = world_point.x;
 			}
@@ -86,12 +86,46 @@ public:
 	}
 
 	glm::mat3 get_world_inertia_matrix() {
-		return rotation_matrix * glm::inverse(inertia_matrix) * glm::transpose(rotation_matrix);
+		return current_state.rotation_matrix * glm::inverse(inertia_matrix) * glm::transpose(current_state.rotation_matrix);
+	}
+	
+	void integrate_remaining(float h) {
+		integrate(h);
 	}
 
-private:
+	void displace_position(glm::vec4 displacement) {
+		current_state.center_of_mass = current_state.center_of_mass + displacement;
+		update_local_coords();
+	}
 
-	void get_forces(/*CollisionHandler* collision_handler*/) {
+	void reintegrate(float h) {
+		//std::cout << "curr timestep: " << time_step * h << "\n";
+		
+		// linear movement
+		current_state.linear_velocity = prev_state.linear_velocity + (h * force) / mass;
+		//std::cout << "linear vel: " << glm::to_string(linear_velocity) << "\n";
+		current_state.center_of_mass = prev_state.center_of_mass + h * current_state.linear_velocity;
+
+		// angular movement
+		glm::mat3 rotation_matrix = glm::mat3_cast(prev_state.rotation_quat);
+		glm::mat3 world_inertia = rotation_matrix * glm::inverse(inertia_matrix) * glm::transpose(rotation_matrix);
+		
+		glm::vec3 angular_momentum = inertia_matrix * prev_state.angular_velocity;
+		
+		//angular velocity
+		glm::vec3 omega = world_inertia * angular_momentum;
+		glm::quat omega_quat = glm::quat(0, omega);
+		glm::quat omega_quat_prime = (0.5f) * omega_quat * prev_state.rotation_quat;
+
+		current_state.angular_velocity = prev_state.angular_velocity + h*glm::vec4(world_inertia*torque.xyz(), 0.0);
+		current_state.rotation_quat = prev_state.rotation_quat + h * omega_quat_prime;
+		
+		current_state.rotation_quat = glm::normalize(current_state.rotation_quat);
+		update_local_coords();
+	}
+	
+	void set_forces(/*CollisionHandler* collision_handler*/) {
+		
 		torque = glm::vec4(0, 0, 0, 0);
 		force = glm::vec4(0, 0, 0, 0);
 
@@ -102,37 +136,50 @@ private:
 		collision_torque = glm::vec4(0, 0, 0, 0);
 
 	}
-
-	void symplectic_integration() {
-		
+	
+	void integrate(float h) {
+	
+		prev_state.center_of_mass = current_state.center_of_mass;
+		prev_state.rotation_quat = current_state.rotation_quat;
+		prev_state.local_coords_matrix = current_state.local_coords_matrix;
+		prev_state.linear_velocity = current_state.linear_velocity;
+		prev_state.angular_velocity = current_state.angular_velocity;
+		prev_state.rotation_matrix = current_state.rotation_matrix;
 		// linear movement
-		linear_velocity = linear_velocity + (time_step * force) / mass;
+		current_state.linear_velocity = current_state.linear_velocity + (h * force) / mass;
 		//std::cout << "linear vel: " << glm::to_string(linear_velocity) << "\n";
-		center_of_mass = center_of_mass + time_step * linear_velocity;
+		current_state.center_of_mass = current_state.center_of_mass + h * current_state.linear_velocity;
 
 		// angular movement
-		glm::mat3 rotation_matrix = glm::mat3_cast(rotation_quat);
+		glm::mat3 rotation_matrix = glm::mat3_cast(current_state.rotation_quat);
 		glm::mat3 world_inertia = rotation_matrix * glm::inverse(inertia_matrix) * glm::transpose(rotation_matrix);
 		
-		glm::vec3 angular_momentum = inertia_matrix * angular_velocity;
+		glm::vec3 angular_momentum = inertia_matrix * current_state.angular_velocity;
 		
 		//angular velocity
 		glm::vec3 omega = world_inertia * angular_momentum;
 		glm::quat omega_quat = glm::quat(0, omega);
-		glm::quat omega_quat_prime = (0.5f) * omega_quat * rotation_quat;
+		glm::quat omega_quat_prime = (0.5f) * omega_quat * current_state.rotation_quat;
 
-		angular_velocity = angular_velocity + time_step*glm::vec4(world_inertia*torque.xyz(), 0.0);
-		rotation_quat = rotation_quat + time_step * omega_quat_prime;
+		current_state.angular_velocity = current_state.angular_velocity + h*glm::vec4(world_inertia*torque.xyz(), 0.0);
+		current_state.rotation_quat = current_state.rotation_quat + h * omega_quat_prime;
 		
-		rotation_quat = glm::normalize(rotation_quat);
+		current_state.rotation_quat = glm::normalize(current_state.rotation_quat);
+		
+		update_local_coords();
 	}
 
+
+private:
+
+
+
 	void update_local_coords() {
-		rotation_matrix = glm::mat3_cast(rotation_quat);
-		local_coords_matrix = glm::transpose(	glm::mat4(glm::vec4(rotation_matrix[0], 0.0), 
-												glm::vec4(rotation_matrix[1], 0.0), 
-												glm::vec4(rotation_matrix[2], 0.0), 
-												center_of_mass));
+		current_state.rotation_matrix = glm::mat3_cast(current_state.rotation_quat);
+		current_state.local_coords_matrix = glm::transpose(	glm::mat4(glm::vec4(current_state.rotation_matrix[0], 0.0), 
+												glm::vec4(current_state.rotation_matrix[1], 0.0), 
+												glm::vec4(current_state.rotation_matrix[2], 0.0), 
+												current_state.center_of_mass));
 	}
 
 	void create_properties() {
@@ -148,10 +195,13 @@ private:
 			sum_of_position = sum_of_position + point.xyz();
 			total_mass += 1.0f;
 		}
-		center_of_mass = position + glm::vec4(sum_of_position * (1.0f/total_mass), 1.0);
-		rotation_matrix = glm::mat3_cast(rotation_quat);
+		current_state.center_of_mass = current_state.center_of_mass + glm::vec4(sum_of_position * (1.0f/total_mass), 1.0);
+		current_state.rotation_matrix = glm::mat3_cast(current_state.rotation_quat);
 
-		local_coords_matrix = glm::transpose(glm::mat4(glm::vec4(rotation_matrix[0],0.0), glm::vec4(rotation_matrix[1],0.0), glm::vec4(rotation_matrix[2], 0.0), center_of_mass));
+		current_state.local_coords_matrix = glm::transpose(	glm::mat4(glm::vec4(current_state.rotation_matrix[0],0.0), 
+															glm::vec4(current_state.rotation_matrix[1],0.0), 
+															glm::vec4(current_state.rotation_matrix[2], 0.0), 
+															current_state.center_of_mass));
 
 	}
 
@@ -242,7 +292,7 @@ private:
 		//left side  
 		form_triangle(mesh_vertices, normals, 2, p1, p2, p6, glm::vec4(-1, 0, 0, 0));
 		form_triangle(mesh_vertices, normals, 3, p1, p6, p5, glm::vec4(-1, 0, 0, 0));
-		add_face_plane(glm::vec4(-1, 0, 0, 0), 0, 1, 4, 5);
+		add_face_plane(glm::vec4(-1, 0, 0, 0), 0, 1, 5, 4);
 
 		//right side
 		form_triangle(mesh_vertices, normals, 4, p4, p3, p7, glm::vec4(1, 0, 0, 0));
@@ -257,12 +307,12 @@ private:
 		//top
 		form_triangle(mesh_vertices, normals, 8, p2, p6, p7, glm::vec4(0, 1, 0, 0));
 		form_triangle(mesh_vertices, normals, 9, p2, p7, p3, glm::vec4(0, 1, 0, 0));
-		add_face_plane(glm::vec4(0, 1, 0, 0), 1, 5, 2, 6);
+		add_face_plane(glm::vec4(0, 1, 0, 0), 1, 5, 6, 2);
 
 		//bottom
 		form_triangle(mesh_vertices, normals, 10, p1, p5, p8, glm::vec4(0, -1, 0, 0));
 		form_triangle(mesh_vertices, normals, 11, p1, p8, p4, glm::vec4(0, -1, 0, 0));
-		add_face_plane(glm::vec4(0, -1, 0, 0), 0, 4, 3, 7);
+		add_face_plane(glm::vec4(0, -1, 0, 0), 0, 4, 7, 3);
 	
 		RawModel new_rawModel = loader.loadToVAO(mesh_vertices, normals, num_vertices * sizeof(float));
 		box_meshes.push_back(new_rawModel);

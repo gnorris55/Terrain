@@ -87,17 +87,17 @@ int main()
     // build and compile shaders
     // -------------------------
     Shader ourShader("Shaders/default_shader.vs", "Shaders/default_fragment_shader.fs");
-    Cube cube1 = Cube(&ourShader, glm::vec4(2.0, 0.0, 0.0, 0.0), glm::vec4(-2.0, -3.0, 0.0, 0.0), glm::vec4(1,0,0,0), glm::vec3(0.5, 2.0, 0.5), 10);
-    Cube cube2 = Cube(&ourShader, glm::vec4(-2.0, 1.0, -3.0, 0.0), glm::vec4(-3.0, 0.0, 0.0, 0.0), glm::vec4(0, 3, 0, 0), glm::vec3(1.0, 1.0, 1.0), 10);
-    Cube cube3 = Cube(&ourShader, glm::vec4(-5.0, 0.0, 0.0, 0.0), glm::vec4(-2.0, -5.0, 0.0, 0.0), glm::vec4(2, 0, 0, 0), glm::vec3(2.0, 0.25, 2.0), 10);
-    Cube cube4 = Cube(&ourShader, glm::vec4(0.0, 3, -5.0, 0.0), glm::vec4(-2.0, -2.0, 0.0, 0.0), glm::vec4(0, 0, 4, 0), glm::vec3(2, 2, 2), 1);
-    Plane curr_plane = Plane(glm::vec4(10, -12, 0, 1), glm::vec4(0.0, 1, 0.0, 0), &ourShader);
-    CollisionHandler collision_handler;
-    collision_handler.add_box(&cube1);
-    collision_handler.add_box(&cube2);
-    collision_handler.add_box(&cube3);
-    collision_handler.add_box(&cube4);
-    collision_handler.add_plane(&curr_plane);
+    Cube cube1 = Cube(&ourShader, glm::vec4(2.0, 0.0, 0.0, 0.0), glm::vec4(0.0, 0.0, 0.0, 0.0), glm::vec4(2,0,0,0), glm::vec3(0.5, 2.0, 0.5), 10);
+    Cube cube2 = Cube(&ourShader, glm::vec4(4.0, 0.0, 0.0, 0.0), glm::vec4(0.0, 0.0, 0.0, 0.0), glm::vec4(1.0f, 0.0f, 0, 0), glm::vec3(1.0, 1.0, 1.0), 10);
+    Cube cube3 = Cube(&ourShader, glm::vec4(-4.0, -5.0, 0.0, 0.0), glm::vec4(0.0, 0.0, 0.0, 0.0), glm::vec4(0, 0, 0, 0), glm::vec3(2.0, 0.25, 2.0), 10);
+    Cube cube4 = Cube(&ourShader, glm::vec4(0.0, 3, -5.0, 0.0), glm::vec4(0.0, -2.0, 0.0, 0.0), glm::vec4(0, 0, 4, 0), glm::vec3(2, 2, 2), 1);
+    Plane curr_plane = Plane(glm::vec4(10, -10, 0, 1), glm::vec4(0.0, 1, 0.0, 0), &ourShader);
+    PhysicsManager physics_handler;
+    //physics_handler.add_box(&cube1);
+    physics_handler.add_box(&cube2);
+    //collision_handler.add_box(&cube3);
+    //collision_handler.add_box(&cube4);
+    physics_handler.add_plane(&curr_plane);
 
 
     glEnable(GL_BLEND);
@@ -135,18 +135,18 @@ int main()
         ourShader.setMat4("view", view);
 
         // for drawing stuff
-        cube1.draw_box();
-        cube1.update_motion();
+        //cube1.draw_box();
+        //cube1.update_motion();
         cube2.draw_box();
-        cube2.update_motion();
-        cube3.draw_box();
-        cube3.update_motion();
-        cube4.draw_box();
-        cube4.update_motion();
+        //cube2.update_motion();
+        //cube3.draw_box();
+        //cube3.update_motion();
+        //cube4.draw_box();
+        //cube4.update_motion();
 
         curr_plane.draw_plane();
 
-        collision_handler.handle_collisions();
+        physics_handler.physics_step();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
