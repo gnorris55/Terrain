@@ -102,7 +102,7 @@ public:
 		//std::cout << "curr timestep: " << time_step * h << "\n";
 		
 		// linear movement
-		glm::vec4 new_velocity = prev_state.linear_velocity + (h * force) / mass;
+		glm::vec4 new_velocity = prev_state.linear_velocity + (h * prev_state.force) / mass;
 		current_state.linear_velocity = prev_state.linear_velocity + (h * force) / mass;
 		//std::cout << "linear vel: " << glm::to_string(linear_velocity) << "\n";
 		current_state.center_of_mass = prev_state.center_of_mass + h * prev_state.linear_velocity;
@@ -119,7 +119,7 @@ public:
 		glm::quat omega_quat = glm::quat(0, omega);
 		glm::quat omega_quat_prime = (0.5f) * omega_quat * prev_state.rotation_quat;
 
-		current_state.angular_velocity = prev_state.angular_velocity + h*glm::vec4(world_inertia*torque.xyz(), 0.0);
+		current_state.angular_velocity = prev_state.angular_velocity + h*glm::vec4(world_inertia*prev_state.torque.xyz(), 0.0);
 		current_state.rotation_quat = prev_state.rotation_quat + h * omega_quat_prime;
 		
 		current_state.rotation_quat = glm::normalize(current_state.rotation_quat);
@@ -128,15 +128,11 @@ public:
 	
 	void set_forces(/*CollisionHandler* collision_handler*/) {
 		
-		torque = glm::vec4(0, 0, 0, 0);
-		force = glm::vec4(0, 0, 0, 0);
+		current_state.torque = glm::vec4(0, 0, 0, 0);
+		current_state.force = glm::vec4(0, 0, 0, 0);
 
-		force = force + glm::vec4(0, -9.8f, 0.0, 0.0)*mass + collision_force + friction_force;
-		torque = torque +  collision_torque + friction_torque;
-
-		collision_force = glm::vec4(0, 0, 0, 0);
-		collision_torque = glm::vec4(0, 0, 0, 0);
-
+		current_state.force = force + glm::vec4(0, -9.8f, 0.0, 0.0)*mass;
+		current_state.torque = torque;
 	}
 	
 	void integrate(float h) {
@@ -147,8 +143,11 @@ public:
 		prev_state.linear_velocity = current_state.linear_velocity;
 		prev_state.angular_velocity = current_state.angular_velocity;
 		prev_state.rotation_matrix = current_state.rotation_matrix;
+		prev_state.force = current_state.force;
+		prev_state.torque = current_state.torque;
+
 		// linear movement
-		glm::vec4 new_velocity = current_state.linear_velocity + (h * force) / mass;
+		glm::vec4 new_velocity = current_state.linear_velocity + (h * current_state.force) / mass;
 		//std::cout << "linear vel: " << glm::to_string(linear_velocity) << "\n";
 		current_state.center_of_mass = current_state.center_of_mass + h * new_velocity;
 		
@@ -165,7 +164,7 @@ public:
 		glm::quat omega_quat = glm::quat(0, omega);
 		glm::quat omega_quat_prime = (0.5f) * omega_quat * current_state.rotation_quat;
 
-		current_state.angular_velocity = current_state.angular_velocity + h*glm::vec4(world_inertia*torque.xyz(), 0.0);
+		current_state.angular_velocity = current_state.angular_velocity + h*glm::vec4(world_inertia*current_state.torque.xyz(), 0.0);
 		current_state.rotation_quat = current_state.rotation_quat + h * omega_quat_prime;
 		
 		current_state.rotation_quat = glm::normalize(current_state.rotation_quat);

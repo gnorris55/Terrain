@@ -15,6 +15,8 @@ struct State {
 	glm::vec4 angular_velocity = glm::vec4(0, 0, 0, 0);
 	glm::mat4 local_coords_matrix = glm::mat4(1.0f);
 	glm::mat3 rotation_matrix = glm::mat3(1.0f);
+	glm::vec4 force = glm::vec4(0.0, 0.0, 0.0, 0.0);
+	glm::vec4 torque = glm::vec4(0.0, 0.0, 0.0, 0.0);
 };
 
 class MainRigidBody {
@@ -48,6 +50,7 @@ public:
 		this->current_state.center_of_mass = starting_pos;
 		this->current_state.linear_velocity = starting_velocity;
 		this->current_state.angular_velocity = starting_angular;
+		
 
 	}
 

@@ -147,31 +147,45 @@ private:
 			int point_index = -1;
 			float time_frac = 1.0;
 			plane_collision_checker(cube, plane_index, point_index, time_frac);
+
 			if (plane_index >= 0) {
+				float cube_plane_vel = glm::dot(cube->current_state.linear_velocity.xyz(), planes[plane_index]->normal.xyz());
+				//std::cout << "rel vel: " << cube_plane_vel << "\n";
+				//if (abs(cube_plane_vel) < 0.1)
+					//std::cout << "implement resting conditions, rel vel\n";
+
+				glm::vec4 prev_point = cube->box_mesh[point_index] * cube->prev_state.local_coords_matrix;
+				glm::vec4 current_point = cube->box_mesh[point_index] * cube->current_state.local_coords_matrix;
+				//std::cout << "previous point: " << glm::to_string(prev_point) << "\n";
+				//std::cout << "current point: " << glm::to_string(current_point) << "\n";
+				//std::cout << "time step: " << time_frac << "\n";
+
 				glm::vec4 difference = cube->box_mesh[point_index] * cube->current_state.local_coords_matrix - planes[plane_index]->position;
 				float height_from_plane = glm::dot(difference.xyz(), planes[plane_index]->normal.xyz());
-				if (height_from_plane > -0.001) {
+				if (height_from_plane > -0.0001) {
+					std::cout << "very close\n";
 					glm::vec4 collision_point = cube->box_mesh[point_index] * cube->current_state.local_coords_matrix;
 					project_point_onto_plane(cube, planes[plane_index], collision_point);
 					collision_point = cube->box_mesh[point_index] * cube->current_state.local_coords_matrix;
 				}
 				else {
 					if (time_frac > 0.0) {
-						curr_time_step = time_frac * cube->time_step;
+						curr_time_step = time_frac * curr_time_step;
 						cube->reintegrate(curr_time_step);
 					}
 
 					glm::vec4 collision_point = cube->box_mesh[point_index] * cube->current_state.local_coords_matrix;
 					project_point_onto_plane(cube, planes[plane_index], collision_point);
 					collision_point = cube->box_mesh[point_index] * cube->current_state.local_coords_matrix;
+					//std::cout << "current point: " << glm::to_string(current_point) << "\n";
 					plane_cube_collision_response(collision_point, cube, planes[plane_index]);
+					cube_plane_vel = glm::dot(cube->current_state.linear_velocity.xyz(), planes[plane_index]->normal.xyz());
+					//std::cout << "rel vel after: " << cube_plane_vel << "\n";
 				}
 			}
 			count++;
-			//if (count > 5) {
-				//break;
-			//}
 			time_step_remaining -= curr_time_step;
+			curr_time_step = time_step_remaining;
 		}
 	}
 
@@ -201,6 +215,8 @@ private:
 			for (int j = 0; j < cube->box_mesh.size(); j++) {
 				glm::vec4 point_velocity = cube->current_state.linear_velocity + glm::vec4(glm::cross(cube->current_state.angular_velocity.xyz(), (cube->box_mesh[j] * cube->current_state.local_coords_matrix - cube->current_state.center_of_mass).xyz()), 0.0);
 				float init_relative_velocity = glm::dot(point_velocity.xyz(), plane->normal.xyz());
+				//std::cout << "rel velocity for " << j << ": " << init_relative_velocity << "\n";
+
 				glm::vec4 difference = cube->box_mesh[j] * cube->current_state.local_coords_matrix - plane->position;
 				float height_from_plane = glm::dot(difference.xyz(), plane->normal.xyz());
 				float curr_time_step = get_determination_time_step(cube, plane, j);
@@ -234,13 +250,13 @@ private:
 	void plane_cube_collision_response(glm::vec4 point, Cube* cube, Plane* plane) {
 		glm::vec4 point_velocity = cube->current_state.linear_velocity + glm::vec4(glm::cross(cube->current_state.angular_velocity.xyz(), (point - cube->current_state.center_of_mass).xyz()), 0.0);
 		float init_relative_velocity = glm::dot(point_velocity.xyz(), plane->normal.xyz());
+		//std::cout << "relative velocity" << init_relative_velocity << "\n";
 		if (init_relative_velocity < 0.0) {
-			
-			glm::mat3 inertia_matrix = cube->get_world_inertia_matrix();
+		
 
+			glm::mat3 inertia_matrix = cube->get_world_inertia_matrix();
 			glm::vec4 r = point - cube->current_state.center_of_mass;
 			glm::vec3 tot_vel = cube->current_state.linear_velocity.xyz() + glm::cross(r.xyz(), cube->current_state.angular_velocity.xyz());
-			
 
 			float cr = 0.1f;
 
@@ -255,17 +271,18 @@ private:
 			cube->current_state.linear_velocity = cube->current_state.linear_velocity + delta_v;
 			cube->current_state.angular_velocity = cube->current_state.angular_velocity + delta_omega;
 
-			//std::cout << "delta velocity: " << glm::to_string(delta_v) << "\n";
-			//std::cout << "delta omega: " << glm::to_string(delta_omega) << "\n";
-			//std::cout << "new velocity: " << glm::to_string(cube->current_state.linear_velocity) << "\n";
-			//std::cout << "new omega: " << glm::to_string(cube->current_state.angular_velocity) << "\n";
 			point_velocity = cube->current_state.linear_velocity + glm::vec4(glm::cross(cube->current_state.angular_velocity.xyz(), (point - cube->current_state.center_of_mass).xyz()), 0.0);
 			tot_vel = cube->current_state.linear_velocity.xyz() + glm::cross(r.xyz(), cube->current_state.angular_velocity.xyz());
 			float new_relative_velocity = glm::dot(point_velocity.xyz(), plane->normal.xyz());
-			std::cout << "new relative velocity: " << new_relative_velocity << "\n";
-			//std::cout << "new total velocity: " << glm::to_string(tot_vel) << "\n";
-			//std::cout << "rel velocity: " << -init_relative_velocity * cr << "\n";
-				
+			
+			// now add friction
+			float friction_c = 0.01;
+			glm::vec4 friction_linear_velocity = cube->current_state.linear_velocity * friction_c;
+			glm::vec4 friction_angular_velocity = cube->current_state.angular_velocity * friction_c;
+			cube->current_state.linear_velocity = cube->current_state.linear_velocity - friction_linear_velocity;
+			cube->current_state.angular_velocity = cube->current_state.angular_velocity - friction_angular_velocity;
+
+			//std::cout << "new relative velocity: " << new_relative_velocity << "\n";
 		}
 	}
 
