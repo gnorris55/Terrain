@@ -1,8 +1,18 @@
-﻿  RigidBodies.cpp
-C:\Users\graem\Desktop\Graphics\projects\RigidBodies\include\RigidBodies\RigidMain.h(28,20): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\graem\Desktop\Graphics\projects\RigidBodies\include\RigidBodies\CollisionHandler.h(137,17): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\graem\Desktop\Graphics\projects\RigidBodies\include\RigidBodies\CollisionHandler.h(199,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\graem\Desktop\Graphics\projects\RigidBodies\include\RigidBodies\CollisionHandler.h(200,22): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
-C:\Users\graem\Desktop\Graphics\projects\RigidBodies\include\RigidBodies\CollisionHandler.h(279,21): warning C4305: 'initializing': truncation from 'double' to 'float'
-LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
-  RigidBodies.vcxproj -> C:\Users\graem\Desktop\Graphics\projects\RigidBodies\x64\Debug\RigidBodies.exe
+﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(531,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (RigidBodies.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  Main.cpp
+C:\Users\graem\Desktop\Graphics\projects\terrain\include\RigidBodies\RigidMain.h(28,20): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\graem\Desktop\Graphics\projects\terrain\include\RigidBodies\CollisionHandler.h(136,17): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\graem\Desktop\Graphics\projects\terrain\include\RigidBodies\CollisionHandler.h(215,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\graem\Desktop\Graphics\projects\terrain\include\RigidBodies\CollisionHandler.h(216,22): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
+C:\Users\graem\Desktop\Graphics\projects\terrain\include\RigidBodies\CollisionHandler.h(297,21): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\graem\Desktop\Graphics\projects\terrain\include\ecosystem\render_tile.h(150,30): warning C4244: '+=': conversion from 'double' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\graem\Desktop\Graphics\projects\terrain\include\ecosystem\render_tile.h(151,30): warning C4244: '+=': conversion from 'double' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+  RigidBodies.vcxproj -> C:\Users\graem\Desktop\Graphics\projects\terrain\x64\Debug\Terrain.exe

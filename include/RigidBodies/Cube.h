@@ -21,6 +21,7 @@ public:
 	std::vector<FacePlane> faces;
 	glm::vec4 friction_force;
 	glm::vec4 friction_torque;
+	//glm::vec3 scale;
 
 	Cube(Shader* shader, glm::vec4 starting_pos, glm::vec4 starting_velocity, glm::vec4 starting_angular, glm::vec3 scale, float mass) : MainRigidBody(shader, starting_pos, starting_velocity, starting_angular, scale, mass) {
 		load_model();
@@ -28,12 +29,15 @@ public:
 	}
 
 	void draw_box() {
+		program->use();
 		RawModel box_mesh = box_meshes[0];
 		glm::mat4 model = glm::mat4(1.0f);
 		//model = glm::translate(model, glm::vec3(0, 0, -15));
 		
 		model = model*current_state.local_coords_matrix;
-		glUniformMatrix4fv(glGetUniformLocation(program->ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		program->setMat4("model", model);
+		program->setVec3("objectColor", glm::vec3(1.0, 1.0, 1.0));
+		//glUniformMatrix4fv(glGetUniformLocation(program->ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
 		renderer.render(box_mesh, GL_TRIANGLES);
 	}
@@ -131,7 +135,8 @@ public:
 		current_state.torque = glm::vec4(0, 0, 0, 0);
 		current_state.force = glm::vec4(0, 0, 0, 0);
 
-		current_state.force = force + glm::vec4(0, -9.8f, 0.0, 0.0)*mass;
+		if (resting== false)
+			current_state.force = force + glm::vec4(0, -9.8f, 0.0, 0.0)*mass;
 		current_state.torque = torque;
 	}
 	

@@ -130,7 +130,6 @@ private:
 		for (int i = 0; i < boxes.size(); i++) {
 				integrate_cube(boxes[i]);	
 		}
-
 	}
 
 	void integrate_cube(Cube* cube) {
@@ -150,20 +149,14 @@ private:
 
 			if (plane_index >= 0) {
 				float cube_plane_vel = glm::dot(cube->current_state.linear_velocity.xyz(), planes[plane_index]->normal.xyz());
-				//std::cout << "rel vel: " << cube_plane_vel << "\n";
-				//if (abs(cube_plane_vel) < 0.1)
-					//std::cout << "implement resting conditions, rel vel\n";
 
 				glm::vec4 prev_point = cube->box_mesh[point_index] * cube->prev_state.local_coords_matrix;
 				glm::vec4 current_point = cube->box_mesh[point_index] * cube->current_state.local_coords_matrix;
-				//std::cout << "previous point: " << glm::to_string(prev_point) << "\n";
-				//std::cout << "current point: " << glm::to_string(current_point) << "\n";
-				//std::cout << "time step: " << time_frac << "\n";
 
 				glm::vec4 difference = cube->box_mesh[point_index] * cube->current_state.local_coords_matrix - planes[plane_index]->position;
 				float height_from_plane = glm::dot(difference.xyz(), planes[plane_index]->normal.xyz());
-				if (height_from_plane > -0.0001) {
-					std::cout << "very close\n";
+				
+				if (height_from_plane > -0.00001) {
 					glm::vec4 collision_point = cube->box_mesh[point_index] * cube->current_state.local_coords_matrix;
 					project_point_onto_plane(cube, planes[plane_index], collision_point);
 					collision_point = cube->box_mesh[point_index] * cube->current_state.local_coords_matrix;
@@ -177,16 +170,39 @@ private:
 					glm::vec4 collision_point = cube->box_mesh[point_index] * cube->current_state.local_coords_matrix;
 					project_point_onto_plane(cube, planes[plane_index], collision_point);
 					collision_point = cube->box_mesh[point_index] * cube->current_state.local_coords_matrix;
-					//std::cout << "current point: " << glm::to_string(current_point) << "\n";
+
 					plane_cube_collision_response(collision_point, cube, planes[plane_index]);
 					cube_plane_vel = glm::dot(cube->current_state.linear_velocity.xyz(), planes[plane_index]->normal.xyz());
-					//std::cout << "rel vel after: " << cube_plane_vel << "\n";
 				}
 			}
 			count++;
 			time_step_remaining -= curr_time_step;
 			curr_time_step = time_step_remaining;
 		}
+	}
+
+	void check_if_resting(Cube *cube, Plane *plane) {
+
+		int count = 0;
+		for (int i = 0; i < cube->box_mesh.size(); i++) {
+				glm::vec4 point_velocity = cube->current_state.linear_velocity + glm::vec4(glm::cross(cube->current_state.angular_velocity.xyz(), (cube->box_mesh[i] * cube->current_state.local_coords_matrix - cube->current_state.center_of_mass).xyz()), 0.0);
+				float relative_velocity = glm::dot(point_velocity.xyz(), plane->normal.xyz());
+				
+				glm::vec4 difference = cube->box_mesh[i] * cube->current_state.local_coords_matrix - plane->position;
+				float height_from_plane = glm::dot(difference.xyz(), plane->normal.xyz());
+				//std::cout << "rel vel: " << relative_velocity << "\n";
+				//std::cout << "pos: " << abs(height_from_plane) << "\n";
+				if (relative_velocity > -1.0 && relative_velocity < 1.0 && abs(height_from_plane) < 0.005)
+					count++;
+
+		}
+
+		//std::cout << count << "\n";
+		if (count == 4) {
+			//std::cout << "should be resting\n";
+			//cube->resting = true;
+		}
+
 	}
 
 	float get_determination_time_step(Cube* cube, Plane* plane, int point_index) {
@@ -203,13 +219,13 @@ private:
 	}
 
 	// returns the index of plane if a collision occurs
-	void plane_collision_checker(Cube* cube, int& plane_i, int& point_i, float &time_frac) {
+	int plane_collision_checker(Cube* cube, int& plane_i, int& point_i, float &time_frac) {
 
 		// check collisions between planes and cube
 		float min_time_step = 1.0f;
 		int min_point_index = -1;
 		int min_plane_index = -1;
-
+		int count = 0;
 		for (int i = 0; i < planes.size(); i++) {
 			Plane* plane = planes[i];
 			for (int j = 0; j < cube->box_mesh.size(); j++) {
@@ -221,6 +237,7 @@ private:
 				float height_from_plane = glm::dot(difference.xyz(), plane->normal.xyz());
 				float curr_time_step = get_determination_time_step(cube, plane, j);
 				if (height_from_plane < 0.0 && init_relative_velocity < 0.0) {
+					count++;
 					if (curr_time_step < min_time_step) {
 						min_time_step = curr_time_step;
 						min_point_index = j;
@@ -234,6 +251,7 @@ private:
 			point_i = min_point_index;
 			time_frac = min_time_step;
 		}
+		return count;
 	}
 
 	void project_point_onto_plane(Cube* cube, Plane* plane, glm::vec4 point) {

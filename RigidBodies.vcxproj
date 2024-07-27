@@ -24,6 +24,7 @@
     <ProjectGuid>{09997059-1a06-4297-b857-fe9c9b53b62c}</ProjectGuid>
     <RootNamespace>RigidBodies</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Terrain</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -104,7 +105,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\graem\Desktop\Graphics\projects\RigidBodies\include;C:\Users\graem\Desktop\Graphics\projects\RigidBodies\glfw-3.4.bin.WIN64\glfw-3.4.bin.WIN64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\graem\Desktop\Graphics\projects\terrain\include;C:\Users\graem\Desktop\Graphics\projects\terrain\glfw-3.4.bin.WIN64\glfw-3.4.bin.WIN64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -121,7 +122,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\graem\Desktop\Graphics\projects\RigidBodies\include;C:\Users\graem\Desktop\Graphics\projects\RigidBodies\glfw-3.4.bin.WIN64\glfw-3.4.bin.WIN64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\graem\Desktop\Graphics\projects\terrain\include;C:\Users\graem\Desktop\Graphics\projects\terrain\glfw-3.4.bin.WIN64\glfw-3.4.bin.WIN64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -134,13 +135,25 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="glad.c" />
-    <ClCompile Include="RigidBodies.cpp" />
+    <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\ecosystem\render_tile.h" />
+    <ClInclude Include="include\ecosystem\Terrain.h" />
     <ClInclude Include="include\RigidBodies\CollisionHandler.h" />
     <ClInclude Include="include\RigidBodies\Cube.h" />
     <ClInclude Include="include\RigidBodies\Plane.h" />
+    <ClInclude Include="include\RigidBodies\Platform.h" />
     <ClInclude Include="include\RigidBodies\RigidMain.h" />
+    <ClInclude Include="include\RigidBodies\shader_c.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\computeShader.cs" />
+    <None Include="Shaders\default_fragment_shader.fs" />
+    <None Include="Shaders\default_shader.vs" />
+    <None Include="Shaders\grassShader.fs" />
+    <None Include="Shaders\grassShader.vs" />
+    <None Include="Shaders\grass_shader.gs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

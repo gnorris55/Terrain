@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="RigidBodies.cpp">
+    <ClCompile Include="glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="glad.c">
+    <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,5 +35,37 @@
     <ClInclude Include="include\RigidBodies\Plane.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\RigidBodies\Platform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ecosystem\Terrain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ecosystem\render_tile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\RigidBodies\shader_c.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\computeShader.cs">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\default_fragment_shader.fs">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\default_shader.vs">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\grass_shader.gs">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\grassShader.fs">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\grassShader.vs">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

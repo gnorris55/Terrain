@@ -1,1 +1,3 @@
 C:\Users\graem\Desktop\Graphics\projects\RigidBodies\x64\Debug\RigidBodies.exe
+C:\Users\graem\Desktop\Graphics\projects\ecosystem\x64\Debug\RigidBodies.exe
+C:\Users\graem\Desktop\Graphics\projects\terrain\x64\Debug\Terrain.exe

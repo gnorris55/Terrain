@@ -3,7 +3,7 @@
 
 #include <RigidBodies/RigidMain.h>
 #include <vector>
-
+#include <glm/gtx/rotate_vector.hpp>
 class Plane {
 
 public:
@@ -11,12 +11,12 @@ public:
 
 	glm::vec4 position;
 	glm::vec4 normal;
+	std::vector<glm::vec4> plane_points = std::vector<glm::vec4>(4);
 	std::vector<RawModel> plane_mesh;
-	int num_bones;
 
 	Plane(glm::vec4 position, glm::vec4 normal, Shader* program) {
 		this->position = position;
-		this->normal = normal;
+		this->normal = glm::normalize(normal);
 		this->program = program;
 		create_mesh();
 	}
@@ -33,60 +33,65 @@ private:
 	Loader loader;
 	Renderer renderer;
 
+	void form_triangle(float arr[], float normals[], int triangle_index, glm::vec4 p1, glm::vec4 p2, glm::vec4 p3, glm::vec4 normal) {
+		int arr_index = triangle_index * 9;
+		normals[arr_index] = normal.x;
+		normals[++arr_index] = normal.y;
+		normals[++arr_index] = normal.z;
+		normals[++arr_index] = normal.x;
+		normals[++arr_index] = normal.y;
+		normals[++arr_index] = normal.z;
+		normals[++arr_index] = normal.x;
+		normals[++arr_index] = normal.y;
+		normals[++arr_index] = normal.z;
+
+
+		arr_index = triangle_index * 9;
+		arr[arr_index] = p1.x;
+		arr[++arr_index] = p1.y;
+		arr[++arr_index] = p1.z;
+		arr[++arr_index] = p2.x;
+		arr[++arr_index] = p2.y;
+		arr[++arr_index] = p2.z;
+		arr[++arr_index] = p3.x;
+		arr[++arr_index] = p3.y;
+		arr[++arr_index] = p3.z;
+	}
+
 	void create_mesh() {
-		float sideLength = 10000;
-		//glm::vec3 p1 = glm::cross(normal.xyz(), position.xyz());	
-		//glm::vec3 p2 = p1*-1.0f;
 
-		glm::vec3 v1 = normalize(cross(normal.xyz(), glm::vec3(1.0f, 0.0f, 0.0f)));
-		glm::vec3 v2 = normalize(cross(normal.xyz(), v1));
 
-		// Calculate the coordinates of the other three points
-		glm::vec3 p1 = position.xyz() + sideLength / 2.0f * v1 + sideLength / 2.0f * v2;
-		glm::vec3 p2 = position.xyz() + sideLength / 2.0f * v1 - sideLength / 2.0f * v2;
-		glm::vec3 p3 = position.xyz() - sideLength / 2.0f * v1 + sideLength / 2.0f * v2;
+		glm::vec3 x1 = glm::normalize(normal.xyz()-glm::vec3(-1.0, 0.0, -1.0));
+		glm::vec3 x2 = glm::normalize(glm::cross(x1, normal.xyz()));
+		glm::vec3 x3 = glm::normalize(glm::cross(x2, normal.xyz()));
 
-		std::cout << "p0" << glm::to_string(position) << "p1: " << glm::to_string(p1) << ",p2: " << glm::to_string(p2) << ", p3: " << glm::to_string(p3) << "\n";
+		std::cout << glm::to_string(normal) << "\n";
+		glm::mat4 rot_mat = glm::orientation(normal.xyz(), glm::vec3(0.0, 1.0, 0.0));
+		std::cout << glm::to_string(rot_mat) << "\n";
+		glm::mat4 model = glm::mat4(1.0f)*rot_mat;
+		model = (glm::translate(model, position.xyz()));
+		model = glm::scale(model, glm::vec3(1000, 1, 1000));
+		model = glm::transpose(model);
+
+		glm::vec4 p1 = glm::vec4(-1.0, 0.0, -1.0, 1.0)*model;
+		glm::vec4 p2 = glm::vec4(-1.0, 0.0,  1.0, 1.0)*model;
+		glm::vec4 p3 = glm::vec4(1.0, 0.0, 1.0, 1.0)*model;
+		glm::vec4 p4 = glm::vec4(1.0, 0.0, -1.0, 1.0)*model;
+
+		plane_points[0] = p1;
+		plane_points[1] = p2;
+		plane_points[2] = p3;
+		plane_points[3] = p4;
+
 		float plane_vertices[6 * 3];
 		float normals[6 * 3];
-		for (int j = 0; j < 6; j++) {
-			normals[(j * 3)] = normal.x;
-			normals[(j * 3) + 1] = normal.y;
-			normals[(j * 3) + 2] = normal.z;
-		}
-
-		int i = 0;
-
-		// first triangle
-		plane_vertices[i++] = p3.x;
-		plane_vertices[i++] = p3.y;
-		plane_vertices[i++] = p3.z;
-
-		plane_vertices[i++] = p1.x;
-		plane_vertices[i++] = p1.y;
-		plane_vertices[i++] = p1.z;
-
-		plane_vertices[i++] = p2.x;
-		plane_vertices[i++] = p2.y;
-		plane_vertices[i++] = p2.z;
-
-		//second triangle
-		plane_vertices[i++] = p3.x;
-		plane_vertices[i++] = p3.y;
-		plane_vertices[i++] = p3.z;
-
-		plane_vertices[i++] = p2.x;
-		plane_vertices[i++] = p2.y;
-		plane_vertices[i++] = p2.z;
-
-		plane_vertices[i++] = position.x;
-		plane_vertices[i++] = position.y;
-		plane_vertices[i++] = position.z;
-
-
-
+		
+		form_triangle(plane_vertices, normals, 0, p1, p2, p3, normal);
+		form_triangle(plane_vertices, normals, 1, p1, p3, p4, normal);
+		
 		plane_mesh.push_back(loader.loadToVAO(plane_vertices, normals, (18) * sizeof(float)));
 	}
+
 
 };
 

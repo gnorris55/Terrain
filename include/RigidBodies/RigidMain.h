@@ -28,6 +28,7 @@ public:
 	float time_step = 0.01;
 	float mass;
 
+	bool resting = false;
 	glm::vec4 collision_force = glm::vec4(0, 0, 0, 0);
 	glm::vec4 collision_torque = glm::vec4(0, 0, 0, 0);
 	glm::vec4 force;

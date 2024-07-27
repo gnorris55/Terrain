@@ -1,7 +1,6 @@
 #ifndef RAW_MODEL_H
 #define RAW_MODEL_H
 
-#include <learnopengl/shader.h>
 
 class RawModel {
 
@@ -27,6 +26,16 @@ public:
 		return RawModel(VAO, numVertices / 3 * sizeof(float));
 
 	}
+	
+	RawModel loadToVAOTexture(float vertices[], float normals[], float texture_coord[], int numVertices, int numTex) {
+		unsigned int VAO = createVAO();
+		storeDataInAttributeList(0, numVertices, 3, vertices);
+		storeDataInAttributeList(1, numVertices, 3, normals);
+		storeDataInTexCoordList(2, numTex, 2, texture_coord);
+		return RawModel(VAO, numVertices / 3 * sizeof(float));
+
+	}
+
 
 private:
 
@@ -43,6 +52,15 @@ private:
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		glBufferData(GL_ARRAY_BUFFER, count, vertices, GL_STATIC_DRAW);
 		glVertexAttribPointer(attributeNumber, verticesInAttribute, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(attributeNumber);
+	}
+	
+	void storeDataInTexCoordList(int attributeNumber, int count, int verticesInAttribute, float vertices[]) {
+		unsigned int VBO;
+		glGenBuffers(1, &VBO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, count, vertices, GL_STATIC_DRAW);
+		glVertexAttribPointer(attributeNumber, verticesInAttribute, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(attributeNumber);
 	}
 };
