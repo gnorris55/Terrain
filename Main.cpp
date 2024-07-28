@@ -24,7 +24,9 @@
 #include <shaders/shader_c.h>
 #include <ecosystem/render_tile.h>
 #include <ecosystem/Terrain.h>
+#include <ecosystem/skybox.h>
 #include <learnopengl/model.h>
+
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -44,7 +46,7 @@ bool firstMouse = true;
 
 // timing
 float deltaTime = 0.0f;
-float lastFrame = 0.0f;
+float lastTime = 0.0f;
 
 int main()
 {
@@ -85,23 +87,35 @@ int main()
     }
 
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
-
+    //stbi_set_flip_vertically_on_load(false);
     // configure global opengl state
     // -----------------------------
-    glEnable(GL_DEPTH_TEST);
 
     // build and compile shaders
     // -------------------------
     //ComputeShader compute_shader("Shaders/computeShader.cs");
     Shader ourShader("Shaders/default_shader.vs", "Shaders/default_fragment_shader.fs");
     Shader grass_shader("Shaders/grassShader.vs", "Shaders/grassShader.fs", "Shaders/grass_shader.gs");
-    std::cout << "shader: " << grass_shader.ID << "\n";
+    Shader skybox_shader("Shaders/skybox.vs", "Shaders/skybox.fs");
+    ComputeShader clipping_shader("Shaders/clippingShader.cs");
+    
+    vector<std::string> faces
+    {
+        "Textures/skybox/right.jpg",
+        "Textures/skybox/left.jpg",
+        "Textures/skybox/top.jpg",
+        "Textures/skybox/bottom.jpg",
+        "Textures/skybox/front.jpg",
+        "Textures/skybox/back.jpg",
+    };
+
+    Skybox skybox = Skybox(&skybox_shader, faces);
+    
+    
     ourShader.use();
     ourShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
     ourShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
     ourShader.setVec3("lightPos", -30.0f, 50.0f, 20.0f);
-
-
 
     Cube cube2 = Cube(&ourShader, glm::vec4(2.0, 3.0, 0.0, 0.0), glm::vec4(10.0, -5.0, 10.0, 0.0), glm::vec4(1.0f, 1.0f, 1.0f, 0), glm::vec3(1.0, 3.0, 1.0), 10);
     Plane curr_plane = Plane(glm::vec4(0, -5.0f, 0, 1), glm::vec4(0.0, 1.0, 0.0, 0), &ourShader);
@@ -109,22 +123,34 @@ int main()
     physics_handler.add_box(&cube2);
     physics_handler.add_plane(&curr_plane);
 
-    Terrain *terrain = new Terrain(&ourShader, &grass_shader, glm::vec4(0.0f, -5.0f, 1.0f, 1.0), "Textures/clumping2.jpg", "Textures/height_map1.jpg");
+    Terrain *terrain = new Terrain(&ourShader, &grass_shader, &clipping_shader, glm::vec4(0.0f, -5.0f, 0.0f, 1.0), "Textures/clumping2.jpg", "Textures/height_map1.jpg");
     //Terrain *terrain2 = new Terrain(&ourShader, &grass_shader, glm::vec4(64.0f, -5.0f, 64.0f, 1.0));
+    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 view = camera.GetViewMatrix();
     
+    glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     // render loop
     // -----------
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    int nbFrames = 0;
+    lastTime = glfwGetTime();
     while (!glfwWindowShouldClose(window))
     {
         // per-frame time logic
         // --------------------
-        float currentFrame = static_cast<float>(glfwGetTime());
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
-
+        float currentTime = static_cast<float>(glfwGetTime());
+        deltaTime = currentTime - lastTime;
+        //lastTime = currentTime;
+        nbFrames++;
+        if (currentTime - lastTime >= 1.0) {
+            // Print the average FPS over the last second
+            std::cout << 1000.0/(nbFrames) << "\n";
+            //std::cout << 1.0/(nbFrames) << "\n";
+            nbFrames = 0;
+            lastTime += 1.0;
+        }
         // input
         // -----
         processInput(window);
@@ -138,6 +164,11 @@ int main()
         
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
+        
+        skybox_shader.use();
+        skybox_shader.setMat4("view", glm::mat4(glm::mat3(camera.GetViewMatrix())));
+        skybox_shader.setMat4("projection", projection);
+        skybox.draw();
 
         ourShader.use();
         ourShader.setVec3("viewPos", camera.Position);
@@ -147,15 +178,16 @@ int main()
         grass_shader.use();
         grass_shader.setVec3("viewPos", camera.Position);
         grass_shader.setMat4("projView", projection * view);
+        
 
-        // for drawing stuff
         cube2.draw_box();
-        terrain->draw(currentFrame);
+        terrain->draw(currentTime, projection * view);
         physics_handler.physics_step();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+    
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------

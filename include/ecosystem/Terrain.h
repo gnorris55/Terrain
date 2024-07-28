@@ -5,11 +5,13 @@ class Terrain {
 
 public:
 
-	
+
 	Shader* shader;
-	Shader *grass_shader;
+	Shader* grass_shader;
+	ComputeShader* clipping_shader;
 	Renderer renderer;
 	glm::vec4 position;
+	glm::mat4 model;
 	std::vector<RawModel> terrain_mesh;
 	std::vector<RenderTile*> render_tiles;
 	std::vector<float> height_map;
@@ -20,18 +22,23 @@ public:
 	unsigned int wind_texture;
 	unsigned int height_map_tex;
 	unsigned int grass_color_tex;
+	unsigned int clipping_tex;
 
-	Terrain(Shader* shader, Shader *grass_shader, glm::vec4 position, const char *grass_heights_name, const char* terrain_height_name) {
+
+	Terrain(Shader* shader, Shader* grass_shader, ComputeShader *clipping_shader, glm::vec4 position, const char* grass_heights_name, const char* terrain_height_name) {
 		this->shader = shader;
 		this->grass_shader = grass_shader;
 		this->position = position;
+		
+		this->model = glm::transpose(glm::translate(glm::mat4(1.0f), position.xyz()));
+		//ComputeShader temp_compute("Shaders/clippingShader.cs");
+		this->clipping_shader = clipping_shader;
 
 		load_textures(grass_heights_name, terrain_height_name);
 		createTerrainMesh();
-		//load_grass_tex();
-		//loadTerrainTexture();
 		defineRenderTiles();
-		std::cout << grass_shader->ID << "\n";
+		create_clipping_texture();
+		std::cout << "clipping: " << clipping_shader->ID << "\n";
 	}
 
 	~Terrain() {
@@ -40,23 +47,54 @@ public:
 		}
 	}
 
-	void draw(float time) {
+	void create_clipping_texture() {
+		glGenTextures(1, &clipping_tex);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, clipping_tex);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 64, 64, 0, GL_RGBA, GL_FLOAT, NULL);
+
+		glBindImageTexture(0, clipping_tex, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+	}
+
+	void get_clipping_tex(glm::mat4 proj_view) {
+		clipping_shader->use();
+		clipping_shader->setMat4("projView", proj_view);
+		clipping_shader->setMat4("model", model);
+
+		glBindImageTexture(0, clipping_tex, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+		glDispatchCompute((unsigned int)64, (unsigned int)64, 1);
+
+		// make sure writing to image has finished before read
+		//glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+	}
+	
+	bool between_neg_pos_one(float a) {
+		return (a > -1.0 && a < 1.0);
+	}
+	void draw(float time, glm::mat4 proj_view) {
 
 		shader->use();
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
-
 		RawModel temp_mesh = terrain_mesh[0];
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::transpose(glm::translate(model, position.xyz()));
 
 		glUniform3fv(glGetUniformLocation(shader->ID, "objectColor"), 1, glm::value_ptr(glm::vec3(0.3, 0.3, 0.3)));
-
 		glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 		renderer.render(temp_mesh, GL_TRIANGLES);
-		
+
+		// rendering grass for everytile
+		get_clipping_tex(proj_view);
+
 		for (int i = 0; i < 63*63; i++) {
-			render_tiles[i]->drawGrass(time);
+
+			//if (between_neg_pos_one(clipping_coord[(i * 3)]) && between_neg_pos_one(clipping_coord[(i * 3) + 1]) && between_neg_pos_one(clipping_coord[(i * 3) + 2]))
+				render_tiles[i]->drawGrass(time);
 
 		}
 
@@ -208,18 +246,18 @@ private:
 		glBindTexture(GL_TEXTURE_2D, height_map_tex);
 		glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, height_map);
 		
-		//for (int i = 0; i < 20; i++) {
-			//std::cout << "heights: " << height_map[i] << "\n";
-		//}
 
 		float posX, posY, posZ;
 		for (int i = 0; i < NUM_DIVISION; i++) {
 			for (int j = 0; j < NUM_DIVISION; j++) {
-				posX = (float)j / ((float)NUM_DIVISION - 1) * TERRAIN_SIZE;
-				posY = 3*height_map[i * 64 + j];
-				this->height_map.push_back(3*height_map[i * 64 + j]);
+				height_map[i * 64 + j] *= 7;
+				//posX = (float)j / ((float)NUM_DIVISION - 1) * TERRAIN_SIZE;
+				posX = j * 2;
+				posY = height_map[i * 64 + j];
+				this->height_map.push_back(height_map[i * 64 + j]);
 				//posY = 0.0;
-				posZ = (float)i / ((float)NUM_DIVISION - 1) * TERRAIN_SIZE;
+				//posZ = (float)i / ((float)NUM_DIVISION - 1) * TERRAIN_SIZE;
+				posZ = i * 2;
 				points[j][i] = glm::vec3(posX, posY, posZ);
 				//heightMap[j][i] = posY;
 

@@ -139,6 +139,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\ecosystem\render_tile.h" />
+    <ClInclude Include="include\ecosystem\skybox.h" />
     <ClInclude Include="include\ecosystem\Terrain.h" />
     <ClInclude Include="include\RigidBodies\CollisionHandler.h" />
     <ClInclude Include="include\RigidBodies\Cube.h" />
@@ -148,12 +149,15 @@
     <ClInclude Include="include\RigidBodies\shader_c.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Shaders\clippingShader.cs" />
     <None Include="Shaders\computeShader.cs" />
     <None Include="Shaders\default_fragment_shader.fs" />
     <None Include="Shaders\default_shader.vs" />
     <None Include="Shaders\grassShader.fs" />
     <None Include="Shaders\grassShader.vs" />
     <None Include="Shaders\grass_shader.gs" />
+    <None Include="Shaders\skybox.fs" />
+    <None Include="Shaders\skybox.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

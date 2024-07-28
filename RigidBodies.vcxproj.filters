@@ -47,6 +47,9 @@
     <ClInclude Include="include\RigidBodies\shader_c.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\ecosystem\skybox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\computeShader.cs">
@@ -65,6 +68,15 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="Shaders\grassShader.vs">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\clippingShader.cs">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\skybox.vs">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\skybox.fs">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
