@@ -109,7 +109,7 @@ int main()
     physics_handler.add_box(&cube2);
     physics_handler.add_plane(&curr_plane);
 
-    Terrain *terrain = new Terrain(&ourShader, &grass_shader, glm::vec4(0.0f, -5.0f, 1.0f, 1.0), "Textures/clumping2.jpg");
+    Terrain *terrain = new Terrain(&ourShader, &grass_shader, glm::vec4(0.0f, -5.0f, 1.0f, 1.0), "Textures/clumping2.jpg", "Textures/height_map1.jpg");
     //Terrain *terrain2 = new Terrain(&ourShader, &grass_shader, glm::vec4(64.0f, -5.0f, 64.0f, 1.0));
     
     glEnable(GL_BLEND);

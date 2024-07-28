@@ -5,14 +5,6 @@ C:\Users\graem\Desktop\Graphics\projects\terrain\include\RigidBodies\CollisionHa
 C:\Users\graem\Desktop\Graphics\projects\terrain\include\RigidBodies\CollisionHandler.h(215,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\graem\Desktop\Graphics\projects\terrain\include\RigidBodies\CollisionHandler.h(216,22): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
 C:\Users\graem\Desktop\Graphics\projects\terrain\include\RigidBodies\CollisionHandler.h(297,21): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\graem\Desktop\Graphics\projects\terrain\include\ecosystem\render_tile.h(150,30): warning C4244: '+=': conversion from 'double' to 'T', possible loss of data
-          with
-          [
-              T=float
-          ]
-C:\Users\graem\Desktop\Graphics\projects\terrain\include\ecosystem\render_tile.h(151,30): warning C4244: '+=': conversion from 'double' to 'T', possible loss of data
-          with
-          [
-              T=float
-          ]
+C:\Users\graem\Desktop\Graphics\projects\terrain\include\ecosystem\render_tile.h(164,17): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\graem\Desktop\Graphics\projects\terrain\include\ecosystem\render_tile.h(165,17): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
   RigidBodies.vcxproj -> C:\Users\graem\Desktop\Graphics\projects\terrain\x64\Debug\Terrain.exe

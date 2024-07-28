@@ -8,31 +8,32 @@ public:
 	Shader* grass_shader;
 	static constexpr int TEXTURE_WIDTH = 32, TEXTURE_HEIGHT = 32;
 	glm::vec4 position;
+	glm::vec3 wind_normal;
+	glm::vec3 color;
 	
 	float tile_step;
 	float tile_height;
-	glm::vec3 wind_normal;
+	std::vector<float> tile_corner_heights = std::vector<float>(4);
 	
 	unsigned int grass_VAO;
 	unsigned int grass_texture1;
 	unsigned int grass_texture2;
 
-	RenderTile(glm::vec4 position, float tile_step, float tile_height, glm::vec3 wind_normal,  ComputeShader *compute_shader, Shader *grass_shader) {
+	RenderTile(glm::vec4 position, std::vector<float>tile_corner_heights, float tile_step, float tile_height, glm::vec3 wind_normal, glm::vec3 grass_color,  ComputeShader *compute_shader, Shader *grass_shader) {
 		this->position = position;
 		this->wind_normal = wind_normal;
+		this->color = grass_color;
 		this->compute_shader = compute_shader;
 		this->grass_shader = grass_shader;
 		this->tile_step = tile_step;
 		this->tile_height = tile_height;
+		this->tile_corner_heights = tile_corner_heights;
 		createTextures();
 		runGrassDisplacementAlg();
-		//std::cout << "wind: " << glm::to_string(wind_normal) << "\n";
-		//std::cout << "ID: " << grass_shader->ID << "\n";
 	}
 
 	float get_sin_value(float time, float displacement) {
 		float freq = 1.5;
-		//0.5 * (np.sin(2 * np.pi * f * t + phi) + 1)
 		return sin(glm::radians(180.0f) * freq * time + displacement);
 	}
 
@@ -43,10 +44,6 @@ public:
 		times.y= get_sin_value(time, offset + degree_step*2);
 		times.z = get_sin_value(time, offset + degree_step*3);
 		times.w = get_sin_value(time, offset + degree_step*4);
-		//times.x = sin(time*glm::radians(90.0) + offset + degree_step);
-		//times.y = sin(time*glm::radians(90.0) + offset + degree_step * 2);
-		//times.z = sin(time*glm::radians(90.0) + offset + degree_step * 3);
-		//times.w = sin(time*glm::radians(90.0) + offset + degree_step * 4);
 		
 		return times;
 	}
@@ -62,10 +59,10 @@ public:
 
 			grass_shader->setMat4("model", model);
 			grass_shader->setFloat("tile_height", tile_height);
-			grass_shader->setVec3("colour", glm::vec3(0.28, 0.43, 0.21));
+			grass_shader->setVec3("colour", color);
 			grass_shader->setMat4("model", glm::mat4(1.0f));
 			grass_shader->setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-			grass_shader->setVec3("lightPos", 0.0f, 10000.0f, 0.0f);
+			grass_shader->setVec3("lightPos", 0.0f, 1000.0f, 0.0f);
 			grass_shader->setVec4("sin_values", sin_val);
 			grass_shader->setVec4("sin_values2", sin_val2);
 			grass_shader->setVec3("wind_normal", wind_normal);
@@ -113,6 +110,27 @@ private:
 		glBindTexture(GL_TEXTURE_2D, grass_texture2);
 	}
 
+	float barry_centric(glm::vec2 pos, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3) {
+		float det = (p2.z - p3.z) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.z - p3.z);
+		float l1 = ((p2.z - p3.z) * (pos.x - p3.x) + (p3.x - p2.x) * (pos.y - p3.z)) / det;
+		float l2 = ((p3.z - p1.z) * (pos.x - p3.x) + (p1.x - p3.x) * (pos.y - p3.z)) / det;
+		float l3 = 1.0f - l1 - l2;
+		return l1 * p1.y + l2 * p2.y + l3 * p3.y;
+	}
+
+	float get_height_on_tile(float x, float z) {
+		float x_coord = x / tile_step;
+		float z_coord = z / tile_step;
+		// first triangle
+
+		if (x_coord <= (1 - z_coord)) {
+			return barry_centric(glm::vec2(z_coord, x_coord), glm::vec3(0.0, tile_corner_heights[0], 0.0), glm::vec3(0.0, tile_corner_heights[1], 1.0), glm::vec3(1.0, tile_corner_heights[2], 0.0));
+		}
+		else {
+			return barry_centric(glm::vec2(z_coord, x_coord), glm::vec3(1.0, tile_corner_heights[2], 0.0), glm::vec3(1.0, tile_corner_heights[3], 1.0), glm::vec3(0.0, tile_corner_heights[1], 1.0));
+		}
+		return 0;
+	}
 
 	// this function uses compute shaders to create a random texture map for grass offset
 	// TODO: implement culling based on occlusion
@@ -130,7 +148,6 @@ private:
 		float heights[TEXTURE_WIDTH * TEXTURE_HEIGHT]; // 3 channels (RGB)
 		
 		float grass_params[TEXTURE_WIDTH * TEXTURE_HEIGHT*3]; // 3 channels (RGB)
-		
 
 		// Get the pixel values
 		glBindTexture(GL_TEXTURE_2D, grass_texture1);
@@ -144,11 +161,14 @@ private:
 		//float length = sqrt(grass_positions.size());
 		for (int i = 0; i < TEXTURE_HEIGHT; i++) {
 			for (int j = 0; j < TEXTURE_WIDTH; j++) {
-				float x_dis = tile_step / (float)TEXTURE_WIDTH * j + (tile_step / 2) / (float)TEXTURE_WIDTH;
-				float z_dis = tile_step / (float)TEXTURE_HEIGHT * i + (tile_step / 2) / (float)TEXTURE_HEIGHT;
+				float x_dis = tile_step / (float)TEXTURE_WIDTH * j + (tile_step / 2) / (float)TEXTURE_WIDTH + tile_step / (float)TEXTURE_WIDTH * (displacements[(i * 31 + j) * 2] - 0.5);
+				float z_dis = tile_step / (float)TEXTURE_HEIGHT * i + (tile_step / 2) / (float)TEXTURE_HEIGHT + tile_step / (float)TEXTURE_WIDTH * (displacements[((i * 31 + j) * 2) + 1] - 0.5);
 				glm::vec3 temp_position = position;
-				temp_position.x += x_dis + tile_step / (float)TEXTURE_WIDTH * (displacements[(i*31+j)*2] - 0.5);
-				temp_position.z += z_dis + tile_step / (float)TEXTURE_WIDTH * (displacements[((i * 31 + j) * 2) + 1] - 0.5);
+				temp_position.x += x_dis;
+				//temp_position.y = position.y;
+				//temp_position.y += get_height_on_tile(x_dis, z_dis);
+				temp_position.y += get_height_on_tile(x_dis, z_dis);
+				temp_position.z += z_dis;
 				
 				grass_positions[((i * (TEXTURE_HEIGHT)) + j)*3] = temp_position.x;
 				grass_positions[((i * (TEXTURE_HEIGHT)) + j)*3+1] = temp_position.y;
